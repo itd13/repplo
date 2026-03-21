@@ -3,12 +3,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const PLACEHOLDER_REPLIES = [
-  "Thanks for reaching out! I'd be happy to connect and discuss this further. Let me know a good time to chat.",
-  "Appreciate you sharing this. I've been thinking along similar lines — would love to compare notes. Can we set up a quick call this week?",
-  "This is really interesting, thanks for sending it over. I'll take a closer look and follow up with any questions I have.",
-];
-
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -49,15 +43,35 @@ export default function Home() {
   const [message, setMessage] = useState('');
   const [replies, setReplies] = useState<string[]>([]);
   const [generated, setGenerated] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleGenerate() {
+  async function handleGenerate() {
     if (!message.trim()) return;
+    setLoading(true);
+    setError(null);
     setGenerated(false);
-    // Reset so the stagger re-triggers
-    setTimeout(() => {
-      setReplies(PLACEHOLDER_REPLIES);
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? 'Something went wrong');
+      }
+
+      const data = await res.json() as { replies: [string, string, string] };
+      setReplies(data.replies);
       setGenerated(true);
-    }, 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -79,11 +93,15 @@ export default function Home() {
 
         <button
           onClick={handleGenerate}
-          disabled={!message.trim()}
-          className="w-full rounded-xl bg-zinc-900 dark:bg-zinc-100 py-3 text-sm font-medium text-white dark:text-zinc-900 transition-opacity hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
+          disabled={!message.trim() || loading}
+          className="w-full rounded-xl bg-zinc-900 dark:bg-zinc-100 py-3 text-sm font-medium text-white dark:text-zinc-900 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Generate Replies
+          {loading ? 'Generating…' : 'Generate Replies'}
         </button>
+
+        {error && (
+          <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+        )}
 
         <AnimatePresence>
           {generated && (
