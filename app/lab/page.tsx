@@ -1,7 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const MIN_LENGTH = 20;
+
+function ClipboardIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    </svg>
+  );
+}
+
+function PasteButton({ onPaste }: { onPaste: (text: string) => void }) {
+  const [supported, setSupported] = useState(false);
+  const [pasting, setPasting] = useState(false);
+
+  useEffect(() => {
+    setSupported(!!navigator.clipboard?.readText);
+  }, []);
+
+  if (!supported) return null;
+
+  async function handlePaste() {
+    try {
+      const text = await navigator.clipboard.readText();
+      onPaste(text);
+      setPasting(true);
+      setTimeout(() => setPasting(false), 600);
+    } catch {
+      // permission denied or empty clipboard — silently ignore
+    }
+  }
+
+  return (
+    <motion.button
+      type="button"
+      onClick={handlePaste}
+      animate={pasting ? { scale: [1, 0.88, 1] } : { scale: 1 }}
+      transition={{ duration: 0.25, ease: 'easeInOut' }}
+      className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 rounded-md text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+    >
+      <ClipboardIcon />
+      Paste
+    </motion.button>
+  );
+}
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -46,8 +92,13 @@ export default function LabPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const trimmed = message.trim();
+  const charCount = trimmed.length;
+  const meetsMinimum = charCount >= MIN_LENGTH;
+  const showCounter = message.length > 0 && !meetsMinimum;
+
   async function handleGenerate() {
-    if (!message.trim()) return;
+    if (!meetsMinimum || loading) return;
     setLoading(true);
     setError(null);
     setGenerated(false);
@@ -83,17 +134,36 @@ export default function LabPage() {
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Paste a message, get three ready-to-send replies.</p>
         </div>
 
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Paste the message you received…"
-          rows={6}
-          className="w-full resize-none rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 px-4 py-3 text-sm leading-relaxed placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-600 transition"
-        />
+        <div className="flex flex-col gap-1.5">
+          <div className="relative">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Paste the message you received — the more context, the better the replies."
+              rows={6}
+              className="w-full resize-none rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 px-4 py-3 text-sm leading-relaxed placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-600 transition"
+            />
+            <PasteButton onPaste={setMessage} />
+          </div>
+
+          <AnimatePresence>
+            {showCounter && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="text-xs text-zinc-400 dark:text-zinc-500 text-right tabular-nums"
+              >
+                {charCount} / {MIN_LENGTH}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
 
         <button
           onClick={handleGenerate}
-          disabled={!message.trim() || loading}
+          disabled={!meetsMinimum || loading}
           className="w-full rounded-xl bg-zinc-900 dark:bg-zinc-100 py-3 text-sm font-medium text-white dark:text-zinc-900 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading ? 'Generating…' : 'Generate Replies'}
