@@ -46,3 +46,11 @@
    Usage: "Audit the UI/UX of this codebase using the ui-ux-pro-max skill"
 
 Run both in the same polish pass before Week 9 launch prep.
+
+## Week 9 — Skills Pipeline
+
+1. **anthropics/skills frontend-design** — landing page + UI polish
+   Install: `npx skills add https://github.com/anthropics/skills --skill frontend-design`
+   Security: all 3 audits pass (Trust Hub, Socket, Snyk) — safe to install autonomously
+   Usage: use when building repplo.com landing page to avoid generic AI aesthetics
+   Goal: distinctive typography, motion, spatial composition, memorable first impression
