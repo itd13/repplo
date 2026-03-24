@@ -28,5 +28,10 @@ Deployed at repplo.com on Vercel.
 ## /lab UI details
 - Paste button inside textarea (top-right): reads clipboard, hidden if API unsupported
 - 20-character minimum before Generate Replies enables; counter shown while below threshold
+- 500-character maximum enforced in onChange and Paste handler; counter turns red within 20 chars of limit
+- Model rejects non-messages with `{ error: "not_a_message" }` (HTTP 422); UI shows amber inline warning
 - Staggered card entrance animation (Framer Motion `AnimatePresence`)
 - Copy button per card with scale animation and "Copied!" feedback
+
+## Future Pro Features
+- **Character limit upsell** — free tier is capped at 500 characters per input. Pro tier should allow up to 1000 characters. Gate this in `app/api/generate/route.ts` once Stripe auth is in place.
