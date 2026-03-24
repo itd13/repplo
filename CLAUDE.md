@@ -34,3 +34,15 @@
 ## Deferred Decisions
 - **Analytics**: PostHog vs Supabase logs — defer to Week 9.
 - **Translation layer**: DeepL vs LibreTranslate — defer to Week 7.
+
+## Week 7 — Skills Pipeline (install manually, not via Claude Code autonomously)
+
+1. **kylezantos/design-motion-principles** — Framer Motion audit
+   Install: `npx add-skill kylezantos/design-motion-principles`
+   Usage: "Audit the motion design in this codebase"
+
+2. **nextlevelbuilder/ui-ux-pro-max-skill** — UI/UX quality audit
+   Install: manually via steps in skills.sh docs (Trust Hub: Fail — Socket/Snyk pass, safe but uncertified for autonomous use)
+   Usage: "Audit the UI/UX of this codebase using the ui-ux-pro-max skill"
+
+Run both in the same polish pass before Week 9 launch prep.
