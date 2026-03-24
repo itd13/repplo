@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MIN_LENGTH = 20;
+const MAX_LENGTH = 500;
+const NEAR_MAX = MAX_LENGTH - 20; // 480
 
 function ClipboardIcon() {
   return (
@@ -91,16 +93,31 @@ export default function LabPage() {
   const [generated, setGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notAMessage, setNotAMessage] = useState(false);
 
   const trimmed = message.trim();
   const charCount = trimmed.length;
+  const rawCount = message.length;
   const meetsMinimum = charCount >= MIN_LENGTH;
-  const showCounter = message.length > 0 && !meetsMinimum;
+  const nearMax = rawCount >= NEAR_MAX;
+  const showCounter = rawCount > 0 && (!meetsMinimum || nearMax);
+
+  const counterColor = nearMax
+    ? 'text-red-500 dark:text-red-400'
+    : 'text-green-600 dark:text-green-400';
+
+  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const val = e.target.value;
+    if (val.length > MAX_LENGTH) return;
+    setMessage(val);
+    if (notAMessage) setNotAMessage(false);
+  }
 
   async function handleGenerate() {
     if (!meetsMinimum || loading) return;
     setLoading(true);
     setError(null);
+    setNotAMessage(false);
     setGenerated(false);
 
     try {
@@ -110,13 +127,18 @@ export default function LabPage() {
         body: JSON.stringify({ message }),
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error ?? 'Something went wrong');
+      const data = await res.json() as { replies?: [string, string, string]; error?: string };
+
+      if (data.error === 'not_a_message') {
+        setNotAMessage(true);
+        return;
       }
 
-      const data = await res.json() as { replies: [string, string, string] };
-      setReplies(data.replies);
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Something went wrong');
+      }
+
+      setReplies(data.replies!);
       setGenerated(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -138,27 +160,47 @@ export default function LabPage() {
           <div className="relative">
             <textarea
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={handleChange}
               placeholder="Paste the message you received — the more context, the better the replies."
               rows={6}
               className="w-full resize-none rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 pl-4 pr-16 py-3 text-sm leading-relaxed placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-600 transition"
             />
-            <PasteButton onPaste={setMessage} />
+            <PasteButton onPaste={(text) => {
+              const clamped = text.slice(0, MAX_LENGTH);
+              setMessage(clamped);
+              if (notAMessage) setNotAMessage(false);
+            }} />
           </div>
 
-          <AnimatePresence>
-            {showCounter && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="text-xs text-zinc-400 dark:text-zinc-500 text-right tabular-nums"
-              >
-                {charCount} / {MIN_LENGTH}
-              </motion.p>
-            )}
-          </AnimatePresence>
+          <div className="flex items-start justify-between gap-2 min-h-[1.25rem]">
+            <AnimatePresence>
+              {notAMessage && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-xs text-amber-600 dark:text-amber-400"
+                >
+                  This doesn&apos;t look like a message — try pasting a DM or email you received.
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {showCounter && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className={`text-xs tabular-nums ml-auto ${counterColor}`}
+                >
+                  {nearMax ? `${rawCount}/${MAX_LENGTH}` : `${charCount}/${MIN_LENGTH}`}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <button

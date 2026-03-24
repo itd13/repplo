@@ -16,10 +16,13 @@ export async function POST(request: Request) {
       {
         role: 'system',
         content:
-          'You generate exactly 3 distinct, ready-to-send reply options for a given message. ' +
+          'First, assess whether the input is a genuine human message (DM, email, comment, text) that someone would realistically reply to. ' +
+          'If the input is random text, gibberish, code, a URL, a single word, or anything that is not a real message someone would reply to, ' +
+          'return exactly this JSON and nothing else: { "error": "not_a_message" }. ' +
+          'If it is a genuine message, generate exactly 3 distinct, context-aware, natural-sounding reply options. ' +
           'Each reply should have a different tone or angle (e.g. warm, concise, curious). ' +
-          'Respond with a JSON object in this exact shape: { "replies": ["...", "...", "..."] }. ' +
-          'No extra keys, no markdown, no explanation.',
+          'Return exactly this JSON and nothing else: { "replies": ["reply1", "reply2", "reply3"] }. ' +
+          'Never mix the two shapes. Never add keys, markdown, or explanation outside the JSON.',
       },
       {
         role: 'user',
@@ -31,7 +34,11 @@ export async function POST(request: Request) {
   });
 
   const raw = completion.choices[0].message.content ?? '{}';
-  const parsed = JSON.parse(raw) as { replies?: unknown };
+  const parsed = JSON.parse(raw) as { replies?: unknown; error?: unknown };
+
+  if (parsed.error === 'not_a_message') {
+    return NextResponse.json({ error: 'not_a_message' }, { status: 422 });
+  }
 
   if (
     !Array.isArray(parsed.replies) ||
