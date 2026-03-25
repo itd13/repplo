@@ -34,5 +34,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
+  // Only protect /lab — /login and /auth/callback must remain public
   matcher: ['/lab/:path*'],
 };
