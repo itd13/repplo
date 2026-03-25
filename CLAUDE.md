@@ -26,6 +26,21 @@
 
 **API** (`app/api/generate/route.ts`): POST `{ message: string }` → `{ replies: [string, string, string] }`. Uses `response_format: { type: "json_object" }`. Key from `process.env.OPENAI_API_KEY`.
 
+## Auth & Database (Week 3 — In Progress)
+- Supabase project: xqapvjdvbsehhkhmutuv.supabase.co (US East, North Virginia)
+- Database tables: `profiles`, `replies`, `usage` — all with RLS enabled
+- Magic link auth via `@supabase/ssr`
+- `lib/supabase/client.ts` — browser-side Supabase client
+- `lib/supabase/server.ts` — server-side Supabase client
+- `app/auth/callback/route.ts` — handles magic link redirect; writes session cookies directly onto the redirect `NextResponse` (fix committed, awaiting test)
+- `app/login/page.tsx` — magic link login page, dark mode compatible, Framer Motion fade-in
+- `proxy.ts` — protects `/lab`, redirects unauthenticated users to `/login`
+- Supabase env vars added to Vercel (all environments)
+- Supabase URL config: Site URL = `repplo.com`, allowed redirects = `repplo.com/auth/callback` + `localhost:3000/auth/callback`
+
+## Known Issue to Verify Next Session
+- Auth callback was redirecting to homepage instead of `/lab` — fix committed (`0a625c1`), needs testing after email rate limit resets (60 min cooldown)
+
 ## Future Pro Features
 - **Character limit upsell**: free tier capped at 500 chars, Pro tier = 1000 chars. Gate in `app/api/generate/route.ts` once Stripe auth is in place.
 - **Haptics**: Vibration API on copy and generate (prep in Week 7).
