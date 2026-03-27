@@ -20,9 +20,14 @@
 - Generate button disabled below 20 characters; label changes to "New Replies" after first generation
 - Prompt-side input detection: model returns `{ "error": "not_a_message" }` for gibberish/URLs/random text (HTTP 422); friendly amber warning fades in inline, disappears on edit
 - Daily limit: 5 free replies/day, enforced server-side via `public.usage`; replies-left counter appears after first generation and counts down live, hidden at 0; amber limit message persists across page refreshes and disables the Generate button
+- **Tone selector**: custom dropdown below the textarea (left-aligned). Options: Balanced / Casual / Professional / Friendly. Default: Balanced. Framer Motion fade animation on open, `onBlur` dismiss.
+  - **Balanced mode**: generates one reply per tone (Casual, Professional, Friendly); each reply card shows a tone label badge
+  - **Single tone mode** (Casual / Professional / Friendly): generates 3 replies in the selected tone with different angles/phrasing; no label badges on cards
+  - Tone is saved to `public.profiles.writing_style` (deferred — not yet wired up)
+- **Replies-left counter**: bottom-right, same row as tone selector. Shows "X replies left" / "1 reply left" (singular handled). Appears after first generation, counts down live, hidden at 0.
 
 **API routes**:
-- `app/api/generate/route.ts`: POST `{ message }` → `{ replies, repliesLeft }`. Auth-gated, checks and increments `public.usage`, saves to `public.replies` with `tokens_used`.
+- `app/api/generate/route.ts`: POST `{ message, tone }` → `{ replies, toneLabels, repliesLeft }`. Auth-gated, checks and increments `public.usage`, saves to `public.replies` with `tokens_used`. Returns `toneLabels: ['Casual', 'Professional', 'Friendly']` for Balanced, `null` for single-tone.
 - `app/api/usage/route.ts`: GET → `{ repliesLeft, limitReached }`. Fetched on page load to seed client state so limits survive refresh.
 
 **Theme toggle**: light/dark/system via next-themes, persisted to localStorage, Framer Motion icon animation, fixed top-right corner.
