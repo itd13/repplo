@@ -6,6 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 const MIN_LENGTH = 20;
 const MAX_LENGTH = 500;
 const NEAR_MAX = MAX_LENGTH - 20; // 480
+const DAILY_FREE_LIMIT = 5;
+
+const TONES = ['Balanced', 'Casual', 'Professional', 'Friendly'] as const;
+type Tone = (typeof TONES)[number];
 
 function ClipboardIcon() {
   return (
@@ -51,6 +55,54 @@ function PasteButton({ onPaste }: { onPaste: (text: string) => void }) {
   );
 }
 
+function ToneSelector({ value, onChange }: { value: Tone; onChange: (t: Tone) => void }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false);
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors flex items-center gap-0.5"
+      >
+        Tone: {value} <span className="ml-0.5 text-[10px]">▾</span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 top-full mt-1 z-10 min-w-[120px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm overflow-hidden"
+          >
+            {TONES.map((tone) => (
+              <button
+                key={tone}
+                type="button"
+                onClick={() => { onChange(tone); setOpen(false); }}
+                className={`block w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                  tone === value
+                    ? 'text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                }`}
+              >
+                {tone}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -71,7 +123,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function ReplyCard({ text, index }: { text: string; index: number }) {
+function ReplyCard({ text, index, toneLabel }: { text: string; index: number; toneLabel?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -79,6 +131,9 @@ function ReplyCard({ text, index }: { text: string; index: number }) {
       transition={{ duration: 0.3, delay: index * 0.1, ease: 'easeOut' }}
       className="flex flex-col gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4"
     >
+      {toneLabel && (
+        <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">{toneLabel}</span>
+      )}
       <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{text}</p>
       <div className="flex justify-end">
         <CopyButton text={text} />
@@ -89,7 +144,9 @@ function ReplyCard({ text, index }: { text: string; index: number }) {
 
 export default function LabPage() {
   const [message, setMessage] = useState('');
+  const [tone, setTone] = useState<Tone>('Balanced');
   const [replies, setReplies] = useState<string[]>([]);
+  const [toneLabels, setToneLabels] = useState<string[] | null>(null);
   const [generated, setGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +162,7 @@ export default function LabPage() {
         setRepliesLeft(data.repliesLeft);
         if (data.limitReached) setDailyLimitReached(true);
       })
-      .catch(() => {}); // silently ignore — UI degrades gracefully
+      .catch(() => {});
   }, []);
 
   const trimmed = message.trim();
@@ -138,10 +195,10 @@ export default function LabPage() {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, tone }),
       });
 
-      const data = await res.json() as { replies?: [string, string, string]; error?: string; repliesLeft?: number };
+      const data = await res.json() as { replies?: [string, string, string]; toneLabels?: string[]; error?: string; repliesLeft?: number };
 
       if (data.error === 'not_a_message') {
         setNotAMessage(true);
@@ -158,6 +215,7 @@ export default function LabPage() {
       }
 
       setReplies(data.replies!);
+      setToneLabels(data.toneLabels ?? null);
       setGenerated(true);
       setRepliesLeft(prev => {
         const next = prev === null
@@ -172,6 +230,8 @@ export default function LabPage() {
       setLoading(false);
     }
   }
+
+  const showRepliesLeft = generated && repliesLeft !== null && repliesLeft > 0 && !dailyLimitReached;
 
   return (
     <main className="flex flex-col flex-1 items-center px-4 py-16 bg-white dark:bg-zinc-950">
@@ -198,6 +258,7 @@ export default function LabPage() {
             }} />
           </div>
 
+          {/* notAMessage warning + char counter */}
           <div className="flex items-start justify-between gap-2 min-h-[1.25rem]">
             <AnimatePresence>
               {notAMessage && (
@@ -212,7 +273,6 @@ export default function LabPage() {
                 </motion.p>
               )}
             </AnimatePresence>
-
             <AnimatePresence>
               {showCounter && (
                 <motion.p
@@ -227,21 +287,25 @@ export default function LabPage() {
               )}
             </AnimatePresence>
           </div>
-        </div>
 
-        <AnimatePresence>
-          {generated && repliesLeft !== null && repliesLeft > 0 && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className={`text-xs ${repliesLeft === 1 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500'}`}
-            >
-              {repliesLeft} free {repliesLeft === 1 ? 'reply' : 'replies'} left today
-            </motion.p>
-          )}
-        </AnimatePresence>
+          {/* Tone selector (left) + replies-left counter (right) */}
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <ToneSelector value={tone} onChange={setTone} />
+            <AnimatePresence>
+              {showRepliesLeft && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`text-xs tabular-nums ${repliesLeft === 1 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500'}`}
+                >
+                  {repliesLeft}/{DAILY_FREE_LIMIT} {repliesLeft === 1 ? 'reply' : 'replies'} left
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
 
         <button
           onClick={handleGenerate}
@@ -276,7 +340,7 @@ export default function LabPage() {
               className="flex flex-col gap-3"
             >
               {replies.map((reply, i) => (
-                <ReplyCard key={i} text={reply} index={i} />
+                <ReplyCard key={i} text={reply} index={i} toneLabel={toneLabels?.[i]} />
               ))}
             </motion.div>
           )}

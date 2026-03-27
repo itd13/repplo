@@ -7,7 +7,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const DAILY_FREE_LIMIT = 5;
 
 export async function POST(request: Request) {
-  const { message } = await request.json();
+  const { message, tone = 'Balanced' } = await request.json();
 
   if (!message || typeof message !== 'string' || !message.trim()) {
     return NextResponse.json({ error: 'message is required' }, { status: 400 });
@@ -47,8 +47,10 @@ export async function POST(request: Request) {
           'First, assess whether the input is a genuine human message (DM, email, comment, text) that someone would realistically reply to. ' +
           'If the input is random text, gibberish, code, a URL, a single word, or anything that is not a real message someone would reply to, ' +
           'return exactly this JSON and nothing else: { "error": "not_a_message" }. ' +
-          'If it is a genuine message, generate exactly 3 distinct, context-aware, natural-sounding reply options. ' +
-          'Each reply should have a different tone or angle (e.g. warm, concise, curious). ' +
+          'If it is a genuine message, generate exactly 3 context-aware, natural-sounding reply options. ' +
+          (tone === 'Balanced'
+            ? 'Reply 1 must be Casual in tone. Reply 2 must be Professional in tone. Reply 3 must be Friendly in tone. Each should feel genuinely different. '
+            : `All 3 replies must be ${tone} in tone, each offering a different angle or phrasing. `) +
           'Return exactly this JSON and nothing else: { "replies": ["reply1", "reply2", "reply3"] }. ' +
           'Never mix the two shapes. Never add keys, markdown, or explanation outside the JSON.',
       },
@@ -95,5 +97,9 @@ export async function POST(request: Request) {
     tokens_used: tokensUsed,
   });
 
-  return NextResponse.json({ replies, repliesLeft: DAILY_FREE_LIMIT - (replyCount + 1) });
+  return NextResponse.json({
+    replies,
+    toneLabels: tone === 'Balanced' ? ['Casual', 'Professional', 'Friendly'] : null,
+    repliesLeft: DAILY_FREE_LIMIT - (replyCount + 1),
+  });
 }
