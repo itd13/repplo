@@ -50,6 +50,9 @@
 - **Analytics**: PostHog vs Supabase logs — defer to Week 9.
 - **Translation layer**: DeepL vs LibreTranslate — defer to Week 7.
 
+## Milestone Notes
+- **Week 7–8**: Explore Figma ↔ Claude Code MCP integration for design-to-code loop. Check if production-ready by then.
+
 ## Week 7 — Skills Pipeline (install manually, not via Claude Code autonomously)
 
 1. **kylezantos/design-motion-principles** — Framer Motion audit
