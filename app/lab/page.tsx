@@ -97,6 +97,17 @@ export default function LabPage() {
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
   const [repliesLeft, setRepliesLeft] = useState<number | null>(null);
 
+  useEffect(() => {
+    fetch('/api/usage')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data: { repliesLeft: number; limitReached: boolean } | null) => {
+        if (!data) return;
+        setRepliesLeft(data.repliesLeft);
+        if (data.limitReached) setDailyLimitReached(true);
+      })
+      .catch(() => {}); // silently ignore — UI degrades gracefully
+  }, []);
+
   const trimmed = message.trim();
   const charCount = trimmed.length;
   const rawCount = message.length;
