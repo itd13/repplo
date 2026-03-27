@@ -38,8 +38,12 @@
 - Supabase env vars added to Vercel (all environments)
 - Supabase URL config: Site URL = `repplo.com`, allowed redirects = `repplo.com/auth/callback` + `localhost:3000/auth/callback`
 
-## Known Issue to Verify Next Session
-- Auth callback was redirecting to homepage instead of `/lab` — fix committed (`0a625c1`), needs testing after email rate limit resets (60 min cooldown)
+## Supabase URL Configuration (all 3 required)
+- `https://repplo.com/auth/callback`
+- `https://www.repplo.com/auth/callback`
+- `http://localhost:3000/auth/callback`
+
+Root cause of prior redirect bug: www redirect was stripping the `/auth/callback` path, so Supabase fell back to the Site URL. Fixed by adding `https://www.repplo.com/auth/callback` to allowed redirect URLs. Magic link now correctly redirects to `/lab` after login. ✓
 
 ## Future Pro Features
 - **Character limit upsell**: free tier capped at 500 chars, Pro tier = 1000 chars. Gate in `app/api/generate/route.ts` once Stripe auth is in place.
