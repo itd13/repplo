@@ -17,16 +17,19 @@
 - Copy button on each reply card with scale animation and "Copied!" confirmation
 - Input validation: 20-char minimum, 500-char maximum
 - Character counter: hidden when empty; green and showing `X/20` below minimum; hidden in valid range; red and showing `X/500` within 20 chars of limit
-- Generate button disabled below 20 characters
+- Generate button disabled below 20 characters; label changes to "New Replies" after first generation
 - Prompt-side input detection: model returns `{ "error": "not_a_message" }` for gibberish/URLs/random text (HTTP 422); friendly amber warning fades in inline, disappears on edit
+- Daily limit: 5 free replies/day, enforced server-side via `public.usage`; replies-left counter appears after first generation and counts down live, hidden at 0; amber limit message persists across page refreshes and disables the Generate button
+
+**API routes**:
+- `app/api/generate/route.ts`: POST `{ message }` → `{ replies, repliesLeft }`. Auth-gated, checks and increments `public.usage`, saves to `public.replies` with `tokens_used`.
+- `app/api/usage/route.ts`: GET → `{ repliesLeft, limitReached }`. Fetched on page load to seed client state so limits survive refresh.
 
 **Theme toggle**: light/dark/system via next-themes, persisted to localStorage, Framer Motion icon animation, fixed top-right corner.
 
 **Dark mode**: all colors use explicit `dark:` Tailwind variants — never CSS variable utilities (they don't respond to runtime `.dark` class changes in Tailwind v4). `app/globals.css` uses `@variant dark (&:where(.dark, .dark *))`.
 
-**API** (`app/api/generate/route.ts`): POST `{ message: string }` → `{ replies: [string, string, string] }`. Uses `response_format: { type: "json_object" }`. Key from `process.env.OPENAI_API_KEY`.
-
-## Auth & Database (Week 3 — In Progress)
+## Auth & Database (Week 3 — Complete)
 - Supabase project: xqapvjdvbsehhkhmutuv.supabase.co (US East, North Virginia)
 - Database tables: `profiles`, `replies`, `usage` — all with RLS enabled
 - Magic link auth via `@supabase/ssr`
