@@ -24,14 +24,14 @@ export async function POST(request: Request) {
   // Check daily usage
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-  const { data: usage } = await supabase
+  const { data: usageRows } = await supabase
     .from('usage')
     .select('reply_count')
     .eq('user_id', user.id)
     .eq('date', today)
-    .single();
+    .limit(1);
 
-  const replyCount = usage?.reply_count ?? 0;
+  const replyCount = usageRows?.[0]?.reply_count ?? 0;
 
   if (replyCount >= DAILY_FREE_LIMIT) {
     return NextResponse.json({ error: 'daily_limit_reached' }, { status: 429 });
