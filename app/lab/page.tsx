@@ -94,6 +94,7 @@ export default function LabPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notAMessage, setNotAMessage] = useState(false);
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
 
   const trimmed = message.trim();
   const charCount = trimmed.length;
@@ -111,6 +112,7 @@ export default function LabPage() {
     if (val.length > MAX_LENGTH) return;
     setMessage(val);
     if (notAMessage) setNotAMessage(false);
+    if (dailyLimitReached) setDailyLimitReached(false);
   }
 
   async function handleGenerate() {
@@ -118,6 +120,7 @@ export default function LabPage() {
     setLoading(true);
     setError(null);
     setNotAMessage(false);
+    setDailyLimitReached(false);
     setGenerated(false);
 
     try {
@@ -131,6 +134,11 @@ export default function LabPage() {
 
       if (data.error === 'not_a_message') {
         setNotAMessage(true);
+        return;
+      }
+
+      if (data.error === 'daily_limit_reached') {
+        setDailyLimitReached(true);
         return;
       }
 
@@ -214,6 +222,20 @@ export default function LabPage() {
         {error && (
           <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
         )}
+
+        <AnimatePresence>
+          {dailyLimitReached && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-sm text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-3"
+            >
+              You&apos;ve used your 5 free replies today. Come back tomorrow — or upgrade to Pro for unlimited replies.
+            </motion.p>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {generated && (

@@ -1,7 +1,10 @@
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const DAILY_FREE_LIMIT = 5;
 
 export async function POST(request: Request) {
   const { message } = await request.json();
@@ -10,6 +13,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'message is required' }, { status: 400 });
   }
 
+  // Auth check
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
+  // Check daily usage
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+  const { data: usage } = await supabase
+    .from('usage')
+    .select('reply_count')
+    .eq('user_id', user.id)
+    .eq('date', today)
+    .single();
+
+  const replyCount = usage?.reply_count ?? 0;
+
+  if (replyCount >= DAILY_FREE_LIMIT) {
+    return NextResponse.json({ error: 'daily_limit_reached' }, { status: 429 });
+  }
+
+  // Generate replies
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -48,5 +76,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unexpected response from model' }, { status: 502 });
   }
 
-  return NextResponse.json({ replies: parsed.replies as [string, string, string] });
+  const replies = parsed.replies as [string, string, string];
+  const tokensUsed = completion.usage?.total_tokens ?? 0;
+
+  // Upsert usage (increment reply_count for today)
+  await supabase
+    .from('usage')
+    .upsert(
+      { user_id: user.id, date: today, reply_count: replyCount + 1 },
+      { onConflict: 'user_id,date' }
+    );
+
+  // Save generation to replies table
+  await supabase.from('replies').insert({
+    user_id: user.id,
+    input_message: message,
+    replies,
+    tokens_used: tokensUsed,
+  });
+
+  return NextResponse.json({ replies });
 }
