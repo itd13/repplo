@@ -300,7 +300,7 @@ export default function LabPage() {
                   transition={{ duration: 0.2 }}
                   className={`text-xs tabular-nums ${repliesLeft === 1 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500'}`}
                 >
-                  {repliesLeft}/{DAILY_FREE_LIMIT} {repliesLeft === 1 ? 'reply' : 'replies'} left
+                  {repliesLeft} {repliesLeft === 1 ? 'reply' : 'replies'} left
                 </motion.p>
               )}
             </AnimatePresence>
