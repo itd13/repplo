@@ -216,7 +216,7 @@ export default function LabPage() {
           disabled={!meetsMinimum || loading}
           className="w-full rounded-xl bg-zinc-900 dark:bg-zinc-100 py-3 text-sm font-medium text-white dark:text-zinc-900 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {loading ? 'Generating…' : 'Generate Replies'}
+          {loading ? 'Generating…' : generated ? 'New Replies' : 'Generate Replies'}
         </button>
 
         {error && (
