@@ -50,6 +50,9 @@
 - **Analytics**: PostHog vs Supabase logs — defer to Week 9.
 - **Translation layer**: DeepL vs LibreTranslate — defer to Week 7.
 
+## Pre-Launch Checklist
+- **Before beta (Week 9)**: configure custom SMTP via Resend to bypass Supabase's 4 emails/hour free tier limit.
+
 ## Milestone Notes
 - **Week 7–8**: Explore Figma ↔ Claude Code MCP integration for design-to-code loop. Check if production-ready by then.
 
