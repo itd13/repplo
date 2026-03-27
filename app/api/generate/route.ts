@@ -95,5 +95,5 @@ export async function POST(request: Request) {
     tokens_used: tokensUsed,
   });
 
-  return NextResponse.json({ replies });
+  return NextResponse.json({ replies, repliesLeft: DAILY_FREE_LIMIT - (replyCount + 1) });
 }

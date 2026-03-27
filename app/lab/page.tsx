@@ -95,6 +95,7 @@ export default function LabPage() {
   const [error, setError] = useState<string | null>(null);
   const [notAMessage, setNotAMessage] = useState(false);
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  const [repliesLeft, setRepliesLeft] = useState<number | null>(null);
 
   const trimmed = message.trim();
   const charCount = trimmed.length;
@@ -130,7 +131,7 @@ export default function LabPage() {
         body: JSON.stringify({ message }),
       });
 
-      const data = await res.json() as { replies?: [string, string, string]; error?: string };
+      const data = await res.json() as { replies?: [string, string, string]; error?: string; repliesLeft?: number };
 
       if (data.error === 'not_a_message') {
         setNotAMessage(true);
@@ -148,6 +149,7 @@ export default function LabPage() {
 
       setReplies(data.replies!);
       setGenerated(true);
+      if (typeof data.repliesLeft === 'number') setRepliesLeft(data.repliesLeft);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -210,6 +212,20 @@ export default function LabPage() {
             </AnimatePresence>
           </div>
         </div>
+
+        <AnimatePresence>
+          {generated && repliesLeft !== null && repliesLeft > 0 && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className={`text-xs ${repliesLeft === 1 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500'}`}
+            >
+              {repliesLeft} free {repliesLeft === 1 ? 'reply' : 'replies'} left today
+            </motion.p>
+          )}
+        </AnimatePresence>
 
         <button
           onClick={handleGenerate}
