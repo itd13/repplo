@@ -149,7 +149,11 @@ export default function LabPage() {
 
       setReplies(data.replies!);
       setGenerated(true);
-      if (typeof data.repliesLeft === 'number') setRepliesLeft(data.repliesLeft);
+      setRepliesLeft(prev =>
+        prev === null
+          ? (typeof data.repliesLeft === 'number' ? data.repliesLeft : null)
+          : Math.max(0, prev - 1)
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
