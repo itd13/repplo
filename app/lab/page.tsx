@@ -117,11 +117,10 @@ export default function LabPage() {
   }
 
   async function handleGenerate() {
-    if (!meetsMinimum || loading) return;
+    if (!meetsMinimum || loading || dailyLimitReached) return;
     setLoading(true);
     setError(null);
     setNotAMessage(false);
-    setDailyLimitReached(false);
     setGenerated(false);
 
     try {
@@ -149,11 +148,13 @@ export default function LabPage() {
 
       setReplies(data.replies!);
       setGenerated(true);
-      setRepliesLeft(prev =>
-        prev === null
+      setRepliesLeft(prev => {
+        const next = prev === null
           ? (typeof data.repliesLeft === 'number' ? data.repliesLeft : null)
-          : Math.max(0, prev - 1)
-      );
+          : Math.max(0, prev - 1);
+        if (next === 0) setDailyLimitReached(true);
+        return next;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -233,7 +234,7 @@ export default function LabPage() {
 
         <button
           onClick={handleGenerate}
-          disabled={!meetsMinimum || loading}
+          disabled={!meetsMinimum || loading || dailyLimitReached}
           className="w-full rounded-xl bg-zinc-900 dark:bg-zinc-100 py-3 text-sm font-medium text-white dark:text-zinc-900 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading ? 'Generating…' : generated ? 'New Replies' : 'Generate Replies'}
