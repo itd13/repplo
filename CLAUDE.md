@@ -53,6 +53,34 @@
 
 Root cause of prior redirect bug: www redirect was stripping the `/auth/callback` path, so Supabase fell back to the Site URL. Fixed by adding `https://www.repplo.com/auth/callback` to allowed redirect URLs. Magic link now correctly redirects to `/lab` after login. ✓
 
+## Language Tier Architecture
+
+**Free tier:**
+- Auto-detect EN/FR only
+- Any other detected language → generates reply in English + shows gentle nudge: "Repplo detected [language] — upgrade to Pro to reply in your audience's language."
+- Fallback always EN/FR
+
+**Pro tier:**
+- Auto-detect any language
+- Manual override: force a specific output language regardless of input language
+
+**Studio tier:**
+- Everything in Pro
+- Custom terminology per language (e.g. "in French always use 'tu' not 'vous'")
+- Geo-localization: auto-detect user's region → suggest top 2 regional languages as defaults
+
+## Future Feature: Geo-Localized Language Defaults (Studio, post-launch)
+Detect user's location via browser geolocation API → use region's top 2 languages as default language options instead of EN/FR. Makes the app feel locally native without manual configuration.
+
+Known loophole: users can disable location to revert to EN/FR defaults. Accepted as negligible leakage — power users who game this are likely Pro converters anyway.
+
+Implementation note: defer until post-launch. Adds complexity (permission prompts, mobile inconsistency) not worth the risk before v1 ships.
+
+## Pricing Architecture (Papa Bear — Dan Mall approach)
+- **Free**: $0 — 5 replies/day, 3 tones, EN/FR auto-detect, 500 char limit, 1 style
+- **Pro**: $9/mo — unlimited replies, Voice Profile, any language + override, 1000 char limit, 3 styles ⭐ target tier
+- **Studio**: $29/mo — everything in Pro + custom tones, unlimited styles, 2000 char limit, 3 team members, geo-localized language defaults, custom terminology per language. Show as "Coming Soon" at launch to anchor price perception.
+
 ## Future Pro Features
 - **Character limit upsell**: free tier capped at 500 chars, Pro tier = 1000 chars. Gate in `app/api/generate/route.ts` once Stripe auth is in place.
 - **Haptics**: Vibration API on copy and generate (prep in Week 7).
