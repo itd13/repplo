@@ -68,6 +68,13 @@ Root cause of prior redirect bug: www redirect was stripping the `/auth/callback
 ## Milestone Notes
 - **Week 7–8**: Explore Figma ↔ Claude Code MCP integration for design-to-code loop. Check if production-ready by then.
 
+## Week 7 Polish References
+
+### Dark Mode Palette
+Reference: https://www.localstack.cloud/legal/fair-usage
+Apply background and foreground text colors from this page to Repplo's dark mode theme.
+Update app/globals.css and all dark: Tailwind variants accordingly during Week 7 polish pass.
+
 ## Week 7 — Skills Pipeline (install manually, not via Claude Code autonomously)
 
 1. **kylezantos/design-motion-principles** — Framer Motion audit
