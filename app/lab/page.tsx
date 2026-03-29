@@ -108,6 +108,7 @@ function CopyButton({ text }: { text: string }) {
 
   async function handleCopy() {
     await navigator.clipboard.writeText(text);
+    navigator.vibrate?.(10);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
@@ -216,6 +217,7 @@ export default function LabPage() {
 
       setReplies(data.replies!);
       setToneLabels(data.toneLabels ?? null);
+      navigator.vibrate?.([10, 50, 20]);
       setGenerated(true);
       setRepliesLeft(prev => {
         const next = prev === null
