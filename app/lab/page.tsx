@@ -291,6 +291,7 @@ export default function LabPage() {
           {/* Tone selector (left) + replies-left counter (right) */}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
             <ToneSelector value={tone} onChange={setTone} />
+            {/* TODO Week 7: replace fade in/out with vertical flip board animation on number change (like a scoreboard). Use Framer Motion AnimatePresence with y: [-10, 0] enter and y: [0, 10] exit so the number flips vertically rather than fading out completely on each generation. */}
             <AnimatePresence>
               {showRepliesLeft && (
                 <motion.p
