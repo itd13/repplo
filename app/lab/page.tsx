@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MIN_LENGTH = 20;
-const MAX_LENGTH = 500;
-const NEAR_MAX = MAX_LENGTH - 20; // 480
+const MAX_LENGTH = 1000;
+const NEAR_MAX = MAX_LENGTH - 20; // 980
 const DAILY_FREE_LIMIT = 50;
 
 const TONES = ['Balanced', 'Casual', 'Professional', 'Friendly'] as const;
