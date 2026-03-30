@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const DAILY_FREE_LIMIT = 5;
+const DAILY_FREE_LIMIT = 50;
 
 export async function POST(request: Request) {
   const { message, tone = 'Balanced' } = await request.json();

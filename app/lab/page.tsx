@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const MIN_LENGTH = 20;
 const MAX_LENGTH = 500;
 const NEAR_MAX = MAX_LENGTH - 20; // 480
-const DAILY_FREE_LIMIT = 5;
+const DAILY_FREE_LIMIT = 50;
 
 const TONES = ['Balanced', 'Casual', 'Professional', 'Friendly'] as const;
 type Tone = (typeof TONES)[number];
@@ -331,7 +331,7 @@ export default function LabPage() {
               transition={{ duration: 0.2 }}
               className="text-sm text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-3"
             >
-              You&apos;ve used your 5 free replies today. Come back tomorrow — or upgrade to Pro for unlimited replies.
+              You&apos;ve used your {DAILY_FREE_LIMIT} free replies today. Come back tomorrow — or upgrade to Pro for unlimited replies.
             </motion.p>
           )}
         </AnimatePresence>
